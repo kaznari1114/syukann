@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>週間報告</title>
+<style>
+  :root {
+    --bg: #f0faf4;
+    --surface: #ffffff;
+    --surface2: #e2f5ea;
+    --border: #b8dfc8;
+    --accent: #1a9e63;
+    --accent2: #157a4c;
+    --green: #1a9e63;
+    --yellow: #c47f00;
+    --red: #d63b3b;
+    --line: #06c755;
+    --text: #0f2018;
+    --text2: #3a6b50;
+    --text3: #7aaa90;
+    --radius: 12px;
+    --sans: 'Meiryo', 'メイリオ', 'MS Gothic', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 700; min-height: 100dvh; overscroll-behavior: none; }
+
+  /* ── 担当者選択 ── */
+  #selectScreen {
+    min-height: 100dvh;
+    background: linear-gradient(160deg, #1a9e63 0%, #0f6b40 100%);
+    display: flex; flex-direction: column;
+    align-items: center; padding: 48px 20px 60px;
+  }
+  .select-title { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .select-title span { color: #ffe066; }
+  .select-sub { font-size: 13px; color: rgba(255,255,255,.75); margin-bottom: 6px; }
+  .select-date { font-size: 12px; color: rgba(255,255,255,.6); margin-bottom: 28px; }
+  .staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 400px; }
+  .staff-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 14px; padding: 18px 10px;
+    color: #fff; font-size: 17px; font-weight: 700;
+    cursor: pointer; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-family: var(--sans);
+  }
+  .staff-btn:active { background: rgba(255,255,255,0.3); transform: scale(.97); }
+  .staff-btn .icon { font-size: 24px; }
+  .staff-btn .submitted { font-size: 10px; color: #ffe066; background: rgba(0,0,0,.2); border-radius: 20px; padding: 2px 8px; }
+  .staff-btn .not-yet   { font-size: 10px; color: rgba(255,255,255,.5); background: rgba(0,0,0,.15); border-radius: 20px; padding: 2px 8px; }
+
+  /* ── メイン画面 ── */
+  #mainScreen { display: none; }
+
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(26,158,99,0.97);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #0f6b40;
+    padding: 14px 16px 12px;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .app-title { font-size: 15px; font-weight: 700; color: #fff; }
+  .app-title span { color: #ffe066; }
+  .staff-label { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 2px; }
+  .btn-back {
+    background: rgba(255,255,255,0.2); color: #fff;
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 8px;
+    padding: 9px 12px; font-size: 12px; font-weight: 700;
+    font-family: var(--sans); cursor: pointer; white-space: nowrap;
+  }
+
+  /* ── フォーム ── */
+  .form-wrap { padding: 14px 16px 120px; }
+
+  .section-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 12px;
+    overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .section-head {
+    background: var(--accent); color: #fff;
+    padding: 10px 14px; font-size: 13px; font-weight: 700;
+  }
+  .section-body { padding: 14px; }
+
+  /* 活動数値 */
+  .activity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .activity-item { display: flex; flex-direction: column; gap: 5px; }
+  .activity-label { font-size: 11px; color: var(--text2); font-weight: 700; }
+  .activity-input {
+    background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: var(--sans); font-size: 16px; font-weight: 700;
+    padding: 10px 12px; outline: none; width: 100%; text-align: center;
+    -webkit-appearance: none;
+  }
+  .activity-input:focus { border-color: var(--accent); background: #f0f6ff; }
+
+  /* 保険数値 */
+  .insurance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ins-item { display: flex; flex-direction: column; gap: 5px; }
+  .ins-label { font-size: 11px; color: var(--text2); font-weight: 700; text-align: center; }
+  .ins-input {
+    background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: var(--sans); font-size: 15px; font-weight: 700;
+    padding: 10px 6px; outline: none; width: 100%; text-align: center;
+    -webkit-appearance: none;
+  }
+  .ins-input:focus { border-color: var(--accent); background: #f0f6ff; }
+
+  /* テキストエリア */
+  .topic-label { font-size: 11px; color: var(--text2); font-weight: 700; margin-bottom: 6px; }
+  .topic-textarea {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: var(--sans); font-size: 14px; font-weight: 700;
+    padding: 10px 12px; outline: none; resize: vertical; line-height: 1.6;
+    min-height: 88px; -webkit-appearance: none;
+  }
+  .topic-textarea:focus { border-color: var(--accent); background: #f0f6ff; }
+  .topic-item { margin-bottom: 12px; }
+  .topic-item:last-child { margin-bottom: 0; }
+  .topic-num {
+    display: inline-block; background: var(--accent); color: #fff;
+    border-radius: 5px; padding: 1px 7px; font-size: 11px; margin-bottom: 5px;
+  }
+
+  /* 送信ボタン */
+  .btn-submit {
+    width: 100%; background: var(--green); color: #fff;
+    border: none; border-radius: 12px; font-family: var(--sans);
+    font-size: 16px; font-weight: 700; padding: 16px;
+    cursor: pointer; margin-bottom: 12px;
+    box-shadow: 0 4px 14px rgba(26,158,99,.35);
+  }
+  .btn-submit:active { opacity: .8; }
+  .btn-send-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .btn-send-mail {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 13px;
+    font-size: 14px; font-weight: 700; font-family: var(--sans); cursor: pointer; text-decoration: none;
+  }
+  .btn-send-line {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--line); color: #fff; border: none; border-radius: 10px; padding: 13px;
+    font-size: 14px; font-weight: 700; font-family: var(--sans); cursor: pointer; text-decoration: none;
+  }
+  .btn-send-copy {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px; padding: 13px;
+    font-size: 14px; font-weight: 700; font-family: var(--sans); cursor: pointer;
+  }
+
+  /* 保存済みバナー */
+  .saved-banner {
+    background: #d0f5e5; border: 1.5px solid #7edbb0; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: var(--green);
+    display: none; align-items: center; gap: 8px;
+  }
+  .saved-banner.show { display: flex; }
+
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a2033; color: #fff; border-radius: 24px; padding: 10px 20px; font-size: 13px; font-weight: 700; font-family: var(--sans); opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; z-index: 999; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- 担当者選択 -->
+<div id="selectScreen">
+  <div class="select-title">週間<span>報告</span></div>
+  <div class="select-sub">担当者を選んでください</div>
+  <div class="select-date" id="selectDate"></div>
+  <div class="staff-grid" id="staffGrid"></div>
+</div>
+
+<!-- メイン -->
+<div id="mainScreen">
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="app-title">週間<span>報告</span></div>
+        <div class="staff-label" id="staffLabel"></div>
+      </div>
+      <button class="btn-back" onclick="goBack()">← 戻る</button>
+    </div>
+  </header>
+
+  <div class="form-wrap">
+
+    <!-- 保存済みバナー -->
+    <div class="saved-banner" id="savedBanner">✅ 今週の報告が保存済みです</div>
+
+    <!-- 活動結果 -->
+    <div class="section-card">
+      <div class="section-head">📋 活動結果（活動結果表）</div>
+      <div class="section-body">
+        <div class="activity-grid">
+          <div class="activity-item"><div class="activity-label">◾️ 訪問</div><input class="activity-input" id="act_visit" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="activity-item"><div class="activity-label">◾️ 同意書</div><input class="activity-input" id="act_consent" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="activity-item"><div class="activity-label">◾️ 未訪問先訪問</div><input class="activity-input" id="act_new" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="activity-item"><div class="activity-label">◾️ 来週同意書取得予定</div><input class="activity-input" id="act_next" type="number" inputmode="numeric" placeholder="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 生命保険 -->
+    <div class="section-card">
+      <div class="section-head">🏥 生命保険</div>
+      <div class="section-body">
+        <div class="insurance-grid">
+          <div class="ins-item"><div class="ins-label">N</div><input class="ins-input" id="life_n" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="ins-item"><div class="ins-label">AP（円）</div><input class="ins-input" id="life_ap" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="ins-item"><div class="ins-label">AC（円）</div><input class="ins-input" id="life_ac" type="number" inputmode="numeric" placeholder="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 損害保険 -->
+    <div class="section-card">
+      <div class="section-head">🚗 損害保険</div>
+      <div class="section-body">
+        <div class="insurance-grid">
+          <div class="ins-item"><div class="ins-label">N</div><input class="ins-input" id="nonlife_n" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="ins-item"><div class="ins-label">AP（円）</div><input class="ins-input" id="nonlife_ap" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="ins-item"><div class="ins-label">AC（円）</div><input class="ins-input" id="nonlife_ac" type="number" inputmode="numeric" placeholder="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 業績トピックス -->
+    <div class="section-card">
+      <div class="section-head">📝 業績トピックス</div>
+      <div class="section-body">
+        <div class="topic-item">
+          <div class="topic-num">①</div>
+          <div class="topic-label">【申込内容】販売商品名、提案内容、経緯等</div>
+          <textarea class="topic-textarea" id="topic1" placeholder="例：〇〇生命 終身医療保険　既存客への提案で申込..."></textarea>
+        </div>
+        <div class="topic-item">
+          <div class="topic-num">②</div>
+          <div class="topic-label">【セールスプロセス】</div>
+          <textarea class="topic-textarea" id="topic2" placeholder="今週のセールスプロセスについて..."></textarea>
+        </div>
+        <div class="topic-item">
+          <div class="topic-num">③</div>
+          <div class="topic-label">【同意書・未訪問先への活動トピックス】</div>
+          <textarea class="topic-textarea" id="topic3" placeholder="同意書取得・未訪問先活動について..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 保存・送信 -->
+    <button class="btn-submit" onclick="saveReport()">💾 一時保存</button>
+    <div class="btn-send-wrap">
+      <a class="btn-send-mail" id="btnSendMail" href="#">📧 メールで部長に送信</a>
+      <a class="btn-send-line" id="btnSendLine" href="#">💬 LINEで送信</a>
+      <button class="btn-send-copy" onclick="copyReport()">📋 テキストをコピー</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MANAGER_EMAIL = 'bucho@example.com';
+const LINE_URL = '';
+const STAFF_LIST = ['宮本','向井','今村','東','鵜野','井内','横山','相原','七條','石井','寄藤','松本'];
+
+let currentStaff = null;
+
+// 当週の日曜日の日付キー（YYYY-MM-DD）
+function getToday() {
+  // 日本時間で今日の日付を取得
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return jst;
+}
+
+function getSundayKey() {
+  const d = getToday();
+  const day = d.getUTCDay(); // JSTで計算しているのでUTCDay使用
+  // 今日が日曜(0)ならそのまま、それ以外は次の日曜
+  const sunday = new Date(d);
+  if (day !== 0) sunday.setUTCDate(d.getUTCDate() + (7 - day));
+  return sunday.toISOString().slice(0, 10);
+}
+
+function getWeekLabel() {
+  const sundayStr = getSundayKey();
+  const sunday = new Date(sundayStr + 'T00:00:00+09:00');
+  const monday = new Date(sunday);
+  monday.setDate(sunday.getDate() - 6);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  return `${sunday.getFullYear()}年 ${fmt(monday)}（月）〜${fmt(sunday)}（日）`;
+}
+
+function storageKey(name) { return `weekly_${name}_${getSundayKey()}`; }
+
+function loadReport(name) {
+  try { return JSON.parse(localStorage.getItem(storageKey(name)) || 'null'); } catch(e) { return null; }
+}
+function saveReportData(name, data) {
+  try { localStorage.setItem(storageKey(name), JSON.stringify(data)); } catch(e) { showToast('⚠️ 保存できません'); }
+}
+
+function buildSelectScreen() {
+  document.getElementById('selectDate').textContent = '📅 ' + getWeekLabel();
+  document.getElementById('staffGrid').innerHTML = STAFF_LIST.map(name => {
+    const saved = loadReport(name);
+    const tag = saved
+      ? `<span class="submitted">✅ 入力済み</span>`
+      : `<span class="not-yet">未入力</span>`;
+    return `<button class="staff-btn" onclick="selectStaff('${name}')">
+      <span class="icon">👤</span><span>${name}</span>${tag}
+    </button>`;
+  }).join('');
+}
+
+function selectStaff(name) {
+  currentStaff = name;
+  document.getElementById('selectScreen').style.display = 'none';
+  document.getElementById('mainScreen').style.display = 'block';
+  document.getElementById('staffLabel').textContent = name + '　' + getWeekLabel();
+  loadForm();
+  updateSendLinks();
+}
+
+function goBack() {
+  document.getElementById('mainScreen').style.display = 'none';
+  document.getElementById('selectScreen').style.display = 'flex';
+  buildSelectScreen();
+}
+
+const FIELDS = ['act_visit','act_consent','act_new','act_next','life_n','life_ap','life_ac','nonlife_n','nonlife_ap','nonlife_ac','topic1','topic2','topic3'];
+
+function loadForm() {
+  const data = loadReport(currentStaff);
+  FIELDS.forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.value = data ? (data[k] || '') : '';
+  });
+  const banner = document.getElementById('savedBanner');
+  banner.classList.toggle('show', !!data);
+}
+
+function collectForm() {
+  const data = {};
+  FIELDS.forEach(k => { data[k] = document.getElementById(k)?.value || ''; });
+  return data;
+}
+
+function saveReport() {
+  saveReportData(currentStaff, collectForm());
+  document.getElementById('savedBanner').classList.add('show');
+  showToast('✅ 保存しました');
+  updateSendLinks();
+}
+
+function buildText() {
+  const d = collectForm();
+  const fmt = v => (v && Number(v) > 0) ? Number(v).toLocaleString('ja-JP') : '0';
+  return [
+    `【週間報告】`,
+    `担当：${currentStaff}`,
+    `対象週：${getWeekLabel()}`,
+    `送信日時：${new Date().toLocaleString('ja-JP')}`,
+    ``,
+    `【週間報告※活動結果表入力は日曜日中】`,
+    `◾️訪問：${d.act_visit||'0'}件`,
+    `◾️同意書：${d.act_consent||'0'}件`,
+    `◾️未訪問先訪問：${d.act_new||'0'}件`,
+    `◾️来週同意書取得予定：${d.act_next||'0'}件`,
+    ``,
+    `【生命保険】`,
+    `N：${d.life_n||'0'}`,
+    `AP：${fmt(d.life_ap)}円`,
+    `AC：${fmt(d.life_ac)}円`,
+    ``,
+    `【損害保険】`,
+    `N：${d.nonlife_n||'0'}`,
+    `AP：${fmt(d.nonlife_ap)}円`,
+    `AC：${fmt(d.nonlife_ac)}円`,
+    ``,
+    `【業績トピックス】`,
+    ``,
+    `①【申込内容】`,
+    d.topic1 || '（なし）',
+    ``,
+    `②【セールスプロセス】`,
+    d.topic2 || '（なし）',
+    ``,
+    `③【同意書・未訪問先への活動トピックス】`,
+    d.topic3 || '（なし）',
+  ].join('\n');
+}
+
+function updateSendLinks() {
+  const text = buildText();
+  const subject = encodeURIComponent(`【週間報告】${currentStaff} ${getWeekLabel()}`);
+  const body = encodeURIComponent(text);
+  document.getElementById('btnSendMail').href = `mailto:${MANAGER_EMAIL}?subject=${subject}&body=${body}`;
+  document.getElementById('btnSendLine').href = LINE_URL || `https://line.me/R/share?text=${encodeURIComponent(text)}`;
+}
+
+function copyReport() {
+  const text = buildText();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('📋 コピーしました')).catch(() => fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea'); ta.value = text;
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+  document.body.removeChild(ta); showToast('📋 コピーしました');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// 初期化
+buildSelectScreen();
+</script>
+</body>
+</html>
